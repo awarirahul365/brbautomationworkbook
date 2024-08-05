@@ -62,7 +62,8 @@ class SupportService:
             desp_content,
             fname:str,
             lname:str,
-            emailprimary
+            emailprimary:str,
+            additionalemail:str
     ):
         try:
             credential_brb,cloud_brb=AuthService.get_credential(credential_key=os.getenv("Credbrbkey"))
@@ -77,12 +78,12 @@ class SupportService:
                 ticketname="testbrbticket"+"_"+date_string
                 payloadcreate={
                     "contactDetails":{
-                    "country": ticketdetails['country'],
+                    "country": ticketdetails['country'] if ticketdetails['country'] is not None else os.getenv("country_temp"),
                     "firstName": fname,
                     "lastName": lname,
-                    "preferredContactMethod": ticketdetails['preferredContactMethod'],
-                    "preferredSupportLanguage": ticketdetails['preferredSupportLanguage'],
-                    "preferredTimeZone": ticketdetails['preferredTimeZone'],
+                    "preferredContactMethod": ticketdetails['preferredContactMethod'] if ticketdetails['preferredContactMethod'] is not None else os.getenv("contact_temp"),
+                    "preferredSupportLanguage": ticketdetails['preferredSupportLanguage'] if ticketdetails['preferredSupportLanguage'] is not None else os.getenv("language_temp"),
+                    "preferredTimeZone": ticketdetails['preferredTimeZone'] if ticketdetails['preferredTimeZone'] is not None else os.getenv("timezone"),
                     "primaryEmailAddress": emailprimary,
                 },
                 "description":desp_content,
@@ -92,11 +93,13 @@ class SupportService:
                 "title":ticketdetails['title'],
                 "advanced_diagnostic_consent":ticketdetails['advanced_diagnostic_consent']
                 }
+                if additionalemail is not None:
+                    payloadcreate['contactDetails']['additionalEmailAddresses']=[additionalemail]
                 logging.info(payloadcreate)
-                await clientdest.support_tickets.begin_create(
+                """await clientdest.support_tickets.begin_create(
                     support_ticket_name=ticketname,
                     create_support_ticket_parameters=payloadcreate
-                )
+                )"""
                 return 1
 
         except Exception as e:
