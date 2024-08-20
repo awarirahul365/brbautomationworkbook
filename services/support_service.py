@@ -75,13 +75,13 @@ class SupportService:
                 )
                 current_datetime=datetime.now()
                 date_string = current_datetime.strftime('%Y%m%d%H%M%S')
-                ticketname="testbrbticket"+"_"+date_string
+                ticketname="brbticket"+"_"+date_string
                 payloadcreate={
                     "contactDetails":{
                     "country": ticketdetails['country'] if ticketdetails['country'] is not None else os.getenv("country_temp"),
                     "firstName": fname,
                     "lastName": lname,
-                    "preferredContactMethod": ticketdetails['preferredContactMethod'] if ticketdetails['preferredContactMethod'] is not None else os.getenv("contact_temp"),
+                    "preferredContactMethod": os.getenv("contact_temp"),
                     "preferredSupportLanguage": ticketdetails['preferredSupportLanguage'] if ticketdetails['preferredSupportLanguage'] is not None else os.getenv("language_temp"),
                     "preferredTimeZone": ticketdetails['preferredTimeZone'] if ticketdetails['preferredTimeZone'] is not None else os.getenv("timezone"),
                     "primaryEmailAddress": emailprimary,
@@ -96,11 +96,12 @@ class SupportService:
                 if additionalemail is not None:
                     payloadcreate['contactDetails']['additionalEmailAddresses']=[additionalemail]
                 logging.info(payloadcreate)
-                """await clientdest.support_tickets.begin_create(
+                response=await clientdest.support_tickets.begin_create(
                     support_ticket_name=ticketname,
                     create_support_ticket_parameters=payloadcreate
-                )"""
-                return 1
+                )
+                final_result=await response.result()
+                return response.status()
 
         except Exception as e:
             logging.error(f"Error creating ticket View the details {e}")

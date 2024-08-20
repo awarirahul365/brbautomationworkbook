@@ -1,58 +1,11 @@
 import azure.functions as func
 import logging
-from services.auth_service import AuthService
-from services.subscription_service import SubscriptionService
 from services.support_service import SupportService
-import asyncio
-import json
-import itertools
-import os
+from validation.subscription_validation import Subvalidation
+from validation.azurecase_validation import Azurecasevalidation
 from simple_colors import *
 app = func.FunctionApp(http_auth_level=func.AuthLevel.FUNCTION)
 
-async def sublistfunction(cred:str):
-    credential,cloud=AuthService.get_credential(cred)
-    try:
-        async with credential:
-            sublistinput=await SubscriptionService.subscription_list(credentials=credential,cloud=cloud)
-            sublist=SubscriptionService.filter_ids(sublistinput)
-        res_dict_sublist={
-            'Credential_key':cred,
-            'sublist':sublist
-        }
-        return res_dict_sublist
-    except Exception as e:
-        logging.error(f"Failed to fetch subscription list {e}")
-        return None
-    
-async def get_subscription_function(subid:str):
-    credential_list=AuthService.get_credential_keys()
-    res=await asyncio.gather(
-        *(asyncio.create_task(
-            sublistfunction(cred)
-        )for cred in credential_list)
-    )
-    present=False
-    cred_key=None
-    for i in res:
-        if subid in i['sublist']:
-            present=True
-            cred_key=i['Credential_key']
-            break 
-    return present,cred_key
-
-async def preview_support_function(subid:str,azrnum:str,cred_key:str):
-    result=await SupportService.preview_support_ticket_details(
-        credential_key=cred_key,
-        subid=subid,
-        azrnum=azrnum
-    )
-    
-    dict_ans={
-        'Result':result,
-        'Credential_Key':cred_key
-    }
-    return dict_ans
 @app.route(route="http_trigger_support_ticket")
 async def http_trigger_support_ticket(req: func.HttpRequest) -> func.HttpResponse:
     logging.info('Python HTTP trigger function processed a request.')
@@ -68,16 +21,22 @@ async def http_trigger_support_ticket(req: func.HttpRequest) -> func.HttpRespons
     custimp=req.params.get('custimp')
     state=req.params.get('state')
     additionalemail=req.params.get('e2')
-    #email3=req.params.get('e3')
-    sub_present,cred_key=await get_subscription_function(subid=subid)
+    logging.info(f"Additionalmailvalue {additionalemail}")
+    logging.info(f"Subscriptionits {subid}")
+    logging.info(f"Azurecasenum {azrnum}")
+    sub_present,cred_key=await Subvalidation.get_subscription_function(subid=subid)
+    azucase_present=await Azurecasevalidation.check_azure_casenum_function(
+        subid=subid,
+        azrnum=azrnum,
+        cred_key=cred_key
+    )
     logging.info(f"sub_present {sub_present}")
     logging.info(f"cred_key present {cred_key}")
-    if sub_present == True:
-        previewticketdetails=await preview_support_function(subid,azrnum,cred_key)
-        if state == "start":
+    logging.info(f"azucase_present {azucase_present}")
+    if sub_present == True and azucase_present == True:
+        previewticketdetails=await Subvalidation.preview_support_function(subid=subid,azrnum=azrnum,cred_key=cred_key)
+        if state == "started":
             if previewticketdetails['Result'] is not None:
-                #res=previewticketdetails
-                #ticketdetails=previewticketdetails['Result']
                 description_new=[
                     previewticketdetails['Result']['description'],
                     "Title: SAP MIM BRB - Critical Support Ticket | MIM # | Sev-A SR#",
@@ -104,15 +63,20 @@ async def http_trigger_support_ticket(req: func.HttpRequest) -> func.HttpRespons
                     emailprimary=emailprimary,
                     additionalemail=additionalemail
                 )
-                if createbrbticket==1:
+                logging.info(f"Ticket status {createbrbticket}")
+                if createbrbticket=="Succeeded":
                     res="Ticket Created Please check the mail"
+                else:
+                    res="Failed to create ticket check the parameters"
                 #print(json.loads(previewticketdetails))
             else:
                 res="Ticket Not Found"
+        elif state == "reset parameter":
+            res="Click Create Button enabled , fill in the parameters and click on create"
         else:
             res="Input incomplete or check the inputs again"
     else:
-        res="Subscription Not present"
+        res="Please check the subscription and Azure Case Number Again"
 
     return func.HttpResponse(
              str(res),
