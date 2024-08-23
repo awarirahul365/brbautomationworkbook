@@ -21,8 +21,8 @@ jobs:
                 SONAR_TOKEN: ${{secrets.SONAR_TOKEN}}
               with:
                 args: >
-                    - Dsonar.organization=awarirahul365
-                    - Dsonar.projectKey=brbautomationworkbook
-                    - Dsonar.host.url=https://sonarcloud.io
-                    - Dsonar.sources= . 
+                    -Dsonar.organization=awarirahul365
+                    -Dsonar.projectKey=brbautomationworkbook
+                    -Dsonar.host.url=https://sonarcloud.io
+                    -Dsonar.sources= . 
             
