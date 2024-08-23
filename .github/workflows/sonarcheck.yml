@@ -1,0 +1,26 @@
+name: 'Sonar cloud check'
+
+on:
+    push:
+        branches:
+            - sonarqubecheck
+
+jobs:
+    DemoSonarqubescan:
+        runs-on: ubuntu-latest
+        steps:
+            - name: 'checkout branch'
+              uses: actions/checkout@v3
+              with:
+                fetch-depth: 0
+            
+            - name: 'SonarQube scan'
+              uses: sonarsource/sonarcloud-github-action@master
+              env:
+                GITHUB_TOKEN: ${{secrets.GIT_TOKEN}}
+                SONAR_TOKEN: ${{secrets.SONAR_TOKEN}}
+              with:
+                args: >
+                    - Dsonar.organization=awarirahul365
+                    - Dsonar.projectKey=brbautomationworkbook
+            
