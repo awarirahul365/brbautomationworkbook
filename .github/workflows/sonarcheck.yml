@@ -23,6 +23,4 @@ jobs:
                 args: >
                     -Dsonar.organization=awarirahul365
                     -Dsonar.projectKey=brbautomationworkbook
-                    -Dsonar.host.url=https://sonarcloud.io
-                    -Dsonar.sources= . 
             
