@@ -4,6 +4,7 @@ from services.support_service import SupportService
 from validation.subscription_validation import Subvalidation
 from validation.azurecase_validation import Azurecasevalidation
 from simple_colors import *
+import os
 app = func.FunctionApp(http_auth_level=func.AuthLevel.FUNCTION)
 
 @app.route(route="http_trigger_support_ticket")
@@ -21,20 +22,19 @@ async def http_trigger_support_ticket(req: func.HttpRequest) -> func.HttpRespons
     custimp=req.params.get('custimp')
     phnum=req.params.get('pnum')
     state=req.params.get('state')
-    additionalemail=req.params.get('e2')
-
-    logging.info(f"Additionalmailvalue {additionalemail}")
-    logging.info(f"Subscriptionits {subid}")
-    logging.info(f"Azurecasenum {azrnum}")
+    #additionalemail=req.params.get('e2')
+    additionalemail=os.getenv('additionalemail')
     sub_present,cred_key=await Subvalidation.get_subscription_function(subid=subid)
     azucase_present=await Azurecasevalidation.check_azure_casenum_function(
         subid=subid,
         azrnum=azrnum,
         cred_key=cred_key
     )
+
     logging.info(f"sub_present {sub_present}")
     logging.info(f"cred_key present {cred_key}")
     logging.info(f"azucase_present {azucase_present}")
+
     if sub_present == True and azucase_present == True:
         previewticketdetails=await Subvalidation.preview_support_function(subid=subid,azrnum=azrnum,cred_key=cred_key)
         if state == "started":

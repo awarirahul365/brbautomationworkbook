@@ -102,7 +102,7 @@ class SupportService:
                     support_ticket_name=ticketname,
                     create_support_ticket_parameters=payloadcreate
                 )
-                final_result=await response.result()
+                await response.result()
                 return response.status()
 
         except Exception as e:

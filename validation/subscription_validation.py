@@ -7,17 +7,20 @@ class Subvalidation:
 
     @staticmethod
     async def preview_support_function(subid:str,azrnum:str,cred_key:str):
-        result=await SupportService.preview_support_ticket_details(
-            credential_key=cred_key,
-            subid=subid,
-            azrnum=azrnum
-        )
+        try:
+            result=await SupportService.preview_support_ticket_details(
+                credential_key=cred_key,
+                subid=subid,
+                azrnum=azrnum
+            )
         
-        dict_ans={
-            'Result':result,
-            'Credential_Key':cred_key
-        }
-        return dict_ans
+            dict_ans={
+                'Result':result,
+                'Credential_Key':cred_key
+            }
+            return dict_ans
+        except Exception as e:
+            logging.error(f"Error with preview_support_function {e}")
     
     @staticmethod
     async def get_subscription_function(subid:str):
